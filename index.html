@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Free TV - Clone Pluto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #000; color: #fff; }
+        .channel-row:hover { background-color: #222; cursor: pointer; }
+        .active-channel { border-left: 4px solid #facc15; background-color: #1a1a1a; }
+        #player-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+        #player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <header class="p-4 bg-black border-b border-zinc-800 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-2xl font-black text-yellow-400 italic">WEB TV LIVE</h1>
+        <div id="status" class="text-xs bg-red-600 px-2 py-1 rounded animate-pulse">AO VIVO</div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-0 md:p-4">
+        <div id="player-container" class="bg-zinc-900 shadow-2xl">
+            <div id="youtube-player"></div>
+        </div>
+
+        <div class="bg-zinc-900 p-4 flex justify-between items-center border-b border-zinc-800">
+            <div>
+                <h2 id="current-video-title" class="font-bold text-lg">Carregando canal...</h2>
+                <p id="current-channel-name" class="text-zinc-400 text-sm italic"></p>
+            </div>
+            <button onclick="toggleMute()" id="mute-btn" class="bg-yellow-400 text-black font-bold py-2 px-6 rounded-full hover:bg-yellow-500 transition">
+                ATIVAR SOM
+            </button>
+        </div>
+
+        <div class="mt-6">
+            <h3 class="text-zinc-500 font-bold uppercase text-xs mb-3 tracking-widest px-4">Guia de Programação</h3>
+            <div id="channel-list" class="space-y-1">
+                </div>
+        </div>
+    </main>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        // 1. LISTA DE CANAIS E VÍDEOS (Você pode adicionar quantos quiser aqui)
+        const CHANNELS = [
+            {
+                id: 0,
+                name: "Cine Ação",
+                playlist: [
+                    { id: "dQw4w9WgXcQ", duration: 212, title: "Filme de Ação 01" },
+                    { id: "3tmd-ClpJKA", duration: 180, title: "Aventura Explosiva" },
+                    { id: "9bZkp7q19f0", duration: 240, title: "Missão Impossível - Fan Cut" }
+                ]
+            },
+            {
+                id: 1,
+                name: "Documentários Natureza",
+                playlist: [
+                    { id: "7664478", duration: 3600, title: "Planeta Terra HD" },
+                    { id: "v_S_Xn1hY8w", duration: 500, title: "Oceanos Profundos" }
+                ]
+            },
+            {
+                id: 2,
+                name: "Música 24h",
+                playlist: [
+                    { id: "jfKfPfyJRdk", duration: 240, title: "Lo-fi Hip Hop Radio" },
+                    { id: "5qap5aO4i9A", duration: 300, title: "Synthwave Mix" }
+                ]
+            }
+        ];
+
+        let player;
+        let activeChannelId = 0;
+        let isMuted = true;
+
+        // Inicia a API do YouTube
+        function onYouTubeIframeAPIReady() {
+            renderChannels();
+            updateLiveStream();
+        }
+
+        function updateLiveStream() {
+            const channel = CHANNELS[activeChannelId];
+            const totalDuration = channel.playlist.reduce((acc, v) => acc + v.duration, 0);
+            const nowInSeconds = Math.floor(Date.now() / 1000);
+            let timeIntoPlaylist = nowInSeconds % totalDuration;
+
+            let currentVideo = channel.playlist[0];
+            let startTime = 0;
+
+            for (const video of channel.playlist) {
+                if (timeIntoPlaylist < video.duration) {
+                    currentVideo = video;
+                    startTime = timeIntoPlaylist;
+                    break;
+                }
+                timeIntoPlaylist -= video.duration;
+            }
+
+            document.getElementById('current-video-title').innerText = currentVideo.title;
+            document.getElementById('current-channel-name').innerText = channel.name;
+
+            if (!player) {
+                player = new YT.Player('youtube-player', {
+                    videoId: currentVideo.id,
+                    playerVars: { 
+                        'autoplay': 1, 
+                        'controls': 0, 
+                        'start': Math.floor(startTime),
+                        'rel': 0,
+                        'disablekb': 1
+                    },
+                    events: { 'onReady': onPlayerReady }
+                });
+            } else {
+                player.loadVideoById({
+                    videoId: currentVideo.id,
+                    startSeconds: Math.floor(startTime)
+                });
+            }
+        }
+
+        function onPlayerReady(event) {
+            event.target.mute();
+            event.target.playVideo();
+        }
+
+        function toggleMute() {
+            if (player.isMuted()) {
+                player.unMute();
+                document.getElementById('mute-btn').innerText = "MUTAR";
+            } else {
+                player.mute();
+                document.getElementById('mute-btn').innerText = "ATIVAR SOM";
+            }
+        }
+
+        function changeChannel(id) {
+            activeChannelId = id;
+            updateLiveStream();
+            renderChannels();
+        }
+
+        function renderChannels() {
+            const list = document.getElementById('channel-list');
+            list.innerHTML = '';
+            CHANNELS.forEach(channel => {
+                const div = document.createElement('div');
+                div.className = `channel-row p-4 flex items-center transition ${activeChannelId === channel.id ? 'active-channel' : ''}`;
+                div.onclick = () => changeChannel(channel.id);
+                div.innerHTML = `
+                    <div class="w-12 h-12 bg-zinc-800 rounded flex items-center justify-center font-bold mr-4 text-yellow-400">
+                        ${channel.id + 1}
+                    </div>
+                    <div>
+                        <div class="font-bold">${channel.name}</div>
+                        <div class="text-xs text-zinc-500 italic uppercase">No ar agora</div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // Sincroniza a cada 30 segundos para garantir que o "ao vivo" não se perca
+        setInterval(updateLiveStream, 30000);
+    </script>
+</body>
+</html>
