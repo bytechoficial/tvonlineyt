@@ -3,178 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web TV Pro - Live</title>
+    <title>Web TV Pro - Desktop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #000; color: #fff; overflow: hidden; }
+        body { background-color: #000; color: #fff; overflow: hidden; height: 100-vh; }
         
-        /* Container que esconde bordas do YT */
-        .tv-screen {
+        /* Layout Lateral */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            height: calc(100vh - 60px);
+        }
+
+        /* Player ocupando o resto da tela */
+        .video-container {
             position: relative;
-            width: 100%;
-            padding-bottom: 56.25%;
             background: #000;
-            overflow: hidden;
+            width: 100%;
+            height: 100%;
         }
 
-        /* Zoom de 5% para esconder logos de canto e o botão 'compartilhar' */
         #youtube-player {
-            position: absolute;
-            top: -2%;
-            left: -2%;
-            width: 104%;
-            height: 104%;
-            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Bloqueia interação com YT */
         }
 
-        /* Bloqueio total de cliques */
         .glass-shield {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 50;
-            background: transparent;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; background: transparent;
         }
 
-        /* Barra de Progresso "Fake" de Live */
-        .live-bar {
-            height: 4px;
-            background: #333;
-            width: 100%;
-            position: relative;
+        /* Scroll customizado para a lateral */
+        .sidebar {
+            background: #111;
+            overflow-y: auto;
+            border-right: 1px solid #222;
         }
-        .live-progress {
-            height: 100%;
+
+        .channel-item {
+            padding: 20px;
+            border-bottom: 1px solid #222;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .channel-item:hover { background: #222; }
+        .channel-item.active {
+            background: #1a1a1a;
+            border-left: 5px solid #facc15;
+        }
+
+        /* Barra de progresso 100% Live */
+        .live-indicator {
+            height: 3px;
             background: #ff0000;
-            width: 100%; /* Sempre cheia */
+            width: 100%;
         }
     </style>
 </head>
-<body class="font-sans select-none">
+<body>
 
-    <div class="max-w-5xl mx-auto md:pt-10">
-        <div class="tv-screen shadow-2xl border border-zinc-900">
-            <div id="youtube-player"></div>
-            <div class="glass-shield"></div>
-            
-            <div class="absolute top-4 right-6 z-[60] opacity-50 font-black italic text-xl tracking-tighter">
-                MINHA <span class="text-yellow-500">TV</span>
+    <header class="h-[60px] bg-black border-b border-zinc-800 flex items-center justify-between px-6">
+        <h1 class="text-xl font-black tracking-tighter text-yellow-500 italic">WEB TV <span class="text-white text-xs">LIVE</span></h1>
+        <button onclick="toggleMute()" id="mute-btn" class="bg-white text-black px-6 py-1 rounded font-bold text-sm">ATIVAR ÁUDIO</button>
+    </header>
+
+    <div class="main-layout">
+        <aside class="sidebar" id="channel-list">
+            </aside>
+
+        <section class="flex flex-col">
+            <div class="video-container">
+                <div id="youtube-player"></div>
+                <div class="glass-shield"></div>
             </div>
-        </div>
+            
+            <div class="live-indicator"></div>
 
-        <div class="live-bar">
-            <div class="live-progress"></div>
-        </div>
-
-        <div class="bg-zinc-900 p-6 flex justify-between items-center">
-            <div>
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
-                    <span class="text-red-600 text-xs font-bold uppercase tracking-widest">Ao Vivo</span>
+            <div class="p-6 bg-zinc-900 border-t border-zinc-800 flex justify-between">
+                <div>
+                    <p class="text-red-600 text-[10px] font-bold uppercase tracking-widest mb-1">● Programação ao vivo</p>
+                    <h2 id="video-title" class="text-2xl font-bold italic">Carregando...</h2>
                 </div>
-                <h2 id="video-title" class="text-2xl font-bold tracking-tight">Sincronizando...</h2>
-                <p id="ch-name" class="text-zinc-500 text-sm font-medium uppercase"></p>
             </div>
-            
-            <button onclick="toggleAudio()" id="btn-audio" class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 px-10 rounded-full transition-all">
-                ATIVAR SOM
-            </button>
-        </div>
-
-        <div id="guide" class="grid grid-cols-2 gap-2 p-2 mt-4"></div>
+        </section>
     </div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        const CATEGORIES = [
+        const CHANNELS = [
             {
-                name: "Filmes de Ação",
+                name: "AÇÃO 24H",
                 videos: [
-                    {id: "dQw4w9WgXcQ", dur: 212, t: "Missão Resgate"},
-                    {id: "3tmd-ClpJKA", dur: 180, t: "Velocidade Máxima"},
-                    {id: "9bZkp7q19f0", dur: 240, t: "Combate Urbano"}
+                    {id: "dQw4w9WgXcQ", dur: 212, t: "Missão Secreta"},
+                    {id: "3tmd-ClpJKA", dur: 180, t: "Perseguição em Alta Velocidade"}
                 ]
             },
             {
-                name: "Documentários",
+                name: "DOCUMENTÁRIOS",
                 videos: [
-                    {id: "v_S_Xn1hY8w", dur: 500, t: "Vida Selvagem"},
-                    {id: "7664478", dur: 3600, t: "Universo Paralelo"}
+                    {id: "v_S_Xn1hY8w", dur: 500, t: "Oceano Profundo"},
+                    {id: "7664478", dur: 3600, t: "Cosmos HD"}
+                ]
+            },
+            {
+                name: "RETRO TV",
+                videos: [
+                    {id: "9bZkp7q19f0", dur: 240, t: "Clássicos dos Anos 80"}
                 ]
             }
         ];
 
         let player;
-        let currentCatIndex = 0;
-        let currentVideo;
+        let activeIndex = 0;
 
         function onYouTubeIframeAPIReady() {
-            renderGuide();
-            playLive();
+            renderSidebar();
+            loadTV();
         }
 
-        function playLive() {
-            const cat = CATEGORIES[currentCatIndex];
-            // ESCOLHA ALEATÓRIA:
-            const randomIndex = Math.floor(Math.random() * cat.videos.length);
-            currentVideo = cat.videos[randomIndex];
+        function loadTV() {
+            const cat = CHANNELS[activeIndex];
+            // Sorteia um vídeo da categoria
+            const video = cat.videos[Math.floor(Math.random() * cat.videos.length)];
+            const startAt = Math.floor(Date.now() / 1000) % video.dur;
 
-            // Simulamos o "Ao Vivo" baseando o início no tempo do relógio
-            const startAt = Math.floor(Date.now() / 1000) % currentVideo.dur;
-
-            document.getElementById('video-title').innerText = currentVideo.t;
-            document.getElementById('ch-name').innerText = cat.name;
+            document.getElementById('video-title').innerText = video.t;
 
             if (!player) {
                 player = new YT.Player('youtube-player', {
-                    videoId: currentVideo.id,
+                    videoId: video.id,
                     playerVars: {
-                        'autoplay': 1, 'controls': 0, 'showinfo': 0, 
-                        'rel': 0, 'modestbranding': 1, 'start': startAt
+                        'autoplay': 1, 'controls': 0, 'modestbranding': 1,
+                        'rel': 0, 'start': startAt, 'disablekb': 1
                     },
                     events: {
                         'onReady': (e) => { e.target.mute(); e.target.playVideo(); },
-                        'onStateChange': onPlayerStateChange
+                        'onStateChange': (e) => { if(e.data === 0) loadTV(); } // Troca quando acaba
                     }
                 });
             } else {
-                player.loadVideoById({
-                    videoId: currentVideo.id,
-                    startSeconds: startAt
-                });
+                player.loadVideoById({ videoId: video.id, startSeconds: startAt });
             }
         }
 
-        // QUANDO O VÍDEO ACABAR, SORTEIA OUTRO NA MESMA CATEGORIA
-        function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.ENDED) {
-                playLive(); // Sorteia o próximo
-            }
-        }
-
-        function toggleAudio() {
+        function toggleMute() {
             if(player.isMuted()) {
                 player.unMute();
-                document.getElementById('btn-audio').innerText = "MUTAR";
+                document.getElementById('mute-btn').innerText = "MUTAR";
             } else {
                 player.mute();
-                document.getElementById('btn-audio').innerText = "ATIVAR SOM";
+                document.getElementById('mute-btn').innerText = "ATIVAR ÁUDIO";
             }
         }
 
-        function changeCat(idx) {
-            currentCatIndex = idx;
-            playLive();
-            renderGuide();
+        function changeChannel(index) {
+            activeIndex = index;
+            loadTV();
+            renderSidebar();
         }
 
-        function renderGuide() {
-            const g = document.getElementById('guide');
-            g.innerHTML = CATEGORIES.map((c, i) => `
-                <div onclick="changeCat(${i})" class="p-4 bg-zinc-900 border-l-4 ${currentCatIndex==i?'border-yellow-500':'border-transparent'} cursor-pointer hover:bg-zinc-800">
-                    <p class="font-bold text-xs uppercase">${c.name}</p>
+        function renderSidebar() {
+            const list = document.getElementById('channel-list');
+            list.innerHTML = CHANNELS.map((ch, i) => `
+                <div onclick="changeChannel(${i})" class="channel-item ${activeIndex === i ? 'active' : ''}">
+                    <p class="text-[10px] text-zinc-500 font-bold mb-1 italic">CANAL 0${i+1}</p>
+                    <p class="font-black text-sm uppercase tracking-tight">${ch.name}</p>
+                    <p class="text-[11px] text-yellow-500 mt-2">● NO AR AGORA</p>
                 </div>
             `).join('');
         }
