@@ -3,107 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web TV Pro - Adaptive</title>
+    <title>Manual TV - 24h</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #000; color: #fff; overflow-x: hidden; margin: 0; }
+        body { background-color: #000; color: #fff; margin: 0; overflow: hidden; font-family: sans-serif; }
+        .app-container { display: flex; flex-direction: column; height: 100vh; }
+        @media (min-width: 768px) { .app-container { flex-direction: row; } }
+
+        /* PLAYER COM ZOOM PARA ESCONDER YOUTUBE */
+        .video-section { flex: 1; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .video-viewport { position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; pointer-events: none; }
+        #youtube-player { width: 100%; height: 100%; }
+        .glass-shield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; background: transparent; }
+
+        /* SIDEBAR */
+        .sidebar { background: #0a0a0a; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; }
+        @media (min-width: 768px) { .sidebar { width: 320px; height: 100vh; } }
+        @media (max-width: 767px) { .sidebar { width: 100%; order: 2; height: 40vh; } }
+
+        .brand { padding: 20px; background: #000; border-bottom: 2px solid #00adef; }
+        .channel-card { padding: 15px 20px; border-bottom: 1px solid #111; cursor: pointer; transition: 0.2s; }
+        .channel-card.active { background: #111; border-left: 4px solid #00adef; }
         
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        @media (min-width: 768px) {
-            .app-container { flex-direction: row; }
-        }
-
-        .video-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #000;
-        }
-
-        .video-wrapper {
-            position: relative;
-            width: 100%;
-            padding-bottom: 56.25%;
-            overflow: hidden;
-        }
-
-        #youtube-player {
-            position: absolute;
-            top: -2%; left: -2%; width: 104%; height: 104%;
-            pointer-events: none;
-        }
-
-        .glass-shield {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 20; background: transparent;
-        }
-
-        .sidebar {
-            background: #0a0a0a;
-            overflow-y: auto;
-            border-right: 1px solid #1a1a1a;
-        }
-
-        @media (min-width: 768px) {
-            .sidebar { width: 320px; height: 100vh; }
-        }
-
-        @media (max-width: 767px) {
-            .sidebar { width: 100%; flex: 1; }
-        }
-
-        .channel-card {
-            padding: 15px 20px;
-            border-bottom: 1px solid #111;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .channel-card.active {
-            background: #111;
-            border-left: 4px solid #facc15;
-        }
-
         .live-bar { height: 3px; background: #ff0000; width: 100%; }
-        .logo-tv { font-weight: 900; font-style: italic; color: #facc15; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        
-        <aside class="sidebar order-2 md:order-1">
-            <div class="p-5 border-b border-zinc-800 flex justify-between items-center bg-black">
-                <span class="logo-tv text-xl uppercase tracking-tighter">Manual <span class="text-white">TV</span></span>
-                <button onclick="toggleAudio()" id="btn-audio" class="text-[10px] bg-white text-black px-3 py-1 rounded font-bold uppercase transition-colors">Som</button>
+        <aside class="sidebar">
+            <div class="brand flex justify-between items-center">
+                <h1 class="text-xl font-black italic text-[#00adef]">MANUAL <span class="text-white">TV</span></h1>
+                <button onclick="toggleAudio()" id="btn-audio" class="bg-blue-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase">Som</button>
             </div>
-            <div id="channel-list"></div>
+            <div id="channel-list" class="overflow-y-auto flex-1"></div>
         </aside>
 
-        <main class="video-section order-1 md:order-2">
-            <div class="video-wrapper">
+        <main class="video-section">
+            <div class="video-viewport">
                 <div id="youtube-player"></div>
-                <div class="glass-shield"></div>
             </div>
+            <div class="glass-shield"></div>
             
-            <div class="live-bar"></div>
-
-            <div class="p-6 bg-zinc-900 shadow-xl">
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
-                    <span class="text-red-600 text-[10px] font-bold uppercase tracking-widest">Transmitindo agora</span>
+            <div class="absolute bottom-0 left-0 w-full">
+                <div class="live-bar"></div>
+                <div class="p-6 bg-black/80 backdrop-blur-md border-t border-zinc-800">
+                    <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-1">● No Ar Agora</p>
+                    <h2 id="video-title" class="text-2xl font-black uppercase italic tracking-tighter italic">Sincronizando...</h2>
                 </div>
-                <h2 id="video-title" class="text-xl md:text-3xl font-black italic uppercase tracking-tighter">Sincronizando...</h2>
-                <p id="cat-name" class="text-zinc-500 text-xs font-bold mt-1 uppercase tracking-widest"></p>
             </div>
         </main>
-
     </div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -112,25 +61,16 @@
             {
                 name: "Manual do Mundo",
                 videos: [
-                    {id: "M0X_oG-vK3I", dur: 945, t: "Como é feita a moeda"},
-                    {id: "uY9lR1xNf_o", dur: 1020, t: "O maior canhão de papel"},
-                    {id: "f7_R6mREfP0", dur: 850, t: "A maior piscina de bolinhas"},
-                    {id: "U678_h6A_1A", dur: 1200, t: "O submarino de PVC"},
-                    {id: "pSUpF55fD-E", dur: 600, t: "Gelatina de Coca-Cola"}
+                    {id: "KmqG_S8I6Yk", dur: 660, t: "Como é feito o vidro"},
+                    {id: "m_S4qWfH6E4", dur: 780, t: "O maior avião de papel"},
+                    {id: "V8G_uV_0Dms", dur: 900, t: "Experiência com Nitrogênio"},
+                    {id: "v9p_8n_Mv_o", dur: 600, t: "Lupa Gigante de Água"}
                 ]
             },
             {
                 name: "Cine Action",
                 videos: [
-                    {id: "dQw4w9WgXcQ", dur: 212, t: "Operação Impacto"},
-                    {id: "3tmd-ClpJKA", dur: 180, t: "Fuga Alucinante"}
-                ]
-            },
-            {
-                name: "Nature & Life",
-                videos: [
-                    {id: "v_S_Xn1hY8w", dur: 500, t: "Oceanos Desconhecidos"},
-                    {id: "7664478", dur: 3600, t: "Planeta Terra"}
+                    {id: "dQw4w9WgXcQ", dur: 212, t: "Trailer Ação 01"}
                 ]
             }
         ];
@@ -145,31 +85,22 @@
 
         function startTV() {
             const cat = CHANNELS[activeIdx];
-            // Escolha aleatória dentro da categoria
             const video = cat.videos[Math.floor(Math.random() * cat.videos.length)];
-            // Cálculo live baseado no tempo real
             const startSecs = Math.floor(Date.now() / 1000) % video.dur;
 
             document.getElementById('video-title').innerText = video.t;
-            document.getElementById('cat-name').innerText = cat.name;
 
             if (!player) {
                 player = new YT.Player('youtube-player', {
                     videoId: video.id,
                     playerVars: { 
-                        'autoplay': 1, 
-                        'controls': 0, 
-                        'modestbranding': 1, 
-                        'rel': 0, 
-                        'start': startSecs,
-                        'disablekb': 1
+                        'autoplay': 1, 'controls': 0, 'modestbranding': 1, 
+                        'rel': 0, 'start': startSecs, 'origin': window.location.origin 
                     },
                     events: {
                         'onReady': (e) => { e.target.mute(); e.target.playVideo(); },
-                        'onStateChange': (e) => { 
-                            // Quando o vídeo acaba, chama a função novamente para escolher outro aleatório
-                            if(e.data === 0) startTV(); 
-                        }
+                        'onStateChange': (e) => { if(e.data === 0) startTV(); },
+                        'onError': (e) => { console.log("Vídeo com erro, pulando..."); startTV(); }
                     }
                 });
             } else {
@@ -181,11 +112,9 @@
             if(player.isMuted()) {
                 player.unMute();
                 document.getElementById('btn-audio').innerText = "Mudo";
-                document.getElementById('btn-audio').classList.replace('bg-white', 'bg-yellow-500');
             } else {
                 player.mute();
                 document.getElementById('btn-audio').innerText = "Som";
-                document.getElementById('btn-audio').classList.replace('bg-yellow-500', 'bg-white');
             }
         }
 
@@ -199,12 +128,8 @@
             const list = document.getElementById('channel-list');
             list.innerHTML = CHANNELS.map((c, i) => `
                 <div onclick="changeCh(${i})" class="channel-card ${activeIdx === i ? 'active' : ''}">
-                    <p class="text-[9px] text-zinc-500 font-bold mb-1 italic uppercase tracking-widest">Canal 0${i+1}</p>
+                    <p class="text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest italic">Channel 0${i+1}</p>
                     <p class="font-black text-sm uppercase tracking-tight">${c.name}</p>
-                    <div class="flex items-center gap-1 mt-2">
-                        <div class="w-1 h-1 bg-red-500 rounded-full animate-pulse"></div>
-                        <p class="text-[9px] text-red-500 font-bold uppercase">No Ar</p>
-                    </div>
                 </div>
             `).join('');
         }
