@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual TV - Live Pro</title>
+    <title>Cine Pro - Filmes 24h</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -11,9 +11,7 @@
         .app-container { display: flex; flex-direction: column; height: 100vh; }
         @media (min-width: 768px) { .app-container { flex-direction: row; } }
 
-        /* AREA DO VÍDEO */
         .video-viewport { flex: 1; position: relative; background: #000; overflow: hidden; }
-        
         #youtube-player {
             position: absolute;
             top: -10%; left: -10%; width: 120%; height: 120%;
@@ -28,10 +26,8 @@
             flex-direction: column;
             justify-content: flex-end;
             background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 50%);
-            transition: opacity 0.3s;
         }
 
-        /* CONTROLES */
         .live-progress-container { width: 100%; height: 4px; background: rgba(255,255,255,0.2); margin-bottom: 12px; }
         .live-progress-bar { height: 100%; background: #ff0000; width: 100%; }
 
@@ -42,22 +38,20 @@
         .control-btn:hover { background: rgba(255,255,255,0.1); }
         .control-btn i { width: 20px; height: 20px; }
 
-        /* SIDEBAR */
         .sidebar { background: #0a0a0a; border-right: 1px solid #1a1a1a; overflow-y: auto; }
         @media (min-width: 768px) { .sidebar { width: 320px; height: 100vh; } }
         @media (max-width: 767px) { .sidebar { width: 100%; height: 35vh; order: 2; } }
 
         .ch-item { padding: 15px 20px; border-bottom: 1px solid #111; cursor: pointer; }
-        .ch-item.active { background: #111; border-left: 4px solid #00adef; }
+        .ch-item.active { background: #111; border-left: 4px solid #e11d48; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        
         <aside class="sidebar">
             <div class="p-6 border-b border-zinc-800">
-                <h1 class="font-black italic text-xl text-[#00adef]">MANUAL <span class="text-white">TV</span></h1>
+                <h1 class="font-black italic text-xl text-rose-600 tracking-tighter">CINE <span class="text-white">PRO</span></h1>
             </div>
             <div id="channel-list"></div>
         </aside>
@@ -68,10 +62,10 @@
             <div class="custom-player-ui p-6" id="player-overlay">
                 <div class="mb-4">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="bg-red-600 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-sm">Ao Vivo</span>
-                        <span id="current-time" class="text-zinc-400 text-[11px] font-mono">14:00:00</span>
+                        <span class="bg-rose-600 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-sm">Filme ao Vivo</span>
+                        <span id="current-time" class="text-zinc-400 text-[11px] font-mono">00:00:00</span>
                     </div>
-                    <h2 id="v-title" class="text-2xl md:text-4xl font-black uppercase italic tracking-tighter">Sincronizando...</h2>
+                    <h2 id="v-title" class="text-2xl md:text-5xl font-black uppercase italic tracking-tighter">Carregando Filme...</h2>
                 </div>
 
                 <div class="live-progress-container">
@@ -80,22 +74,22 @@
 
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <div class="control-btn" onclick="toggleMute()" title="Mutar/Desmutar">
-                            <i data-lucide="volume-2" id="icon-mute"></i>
+                        <div class="control-btn" onclick="toggleMute()" title="Áudio">
+                            <i data-lucide="volume-x" id="icon-mute"></i>
                         </div>
                         <div class="control-btn" onclick="toggleCC()" title="Legendas">
                             <i data-lucide="captions"></i>
                         </div>
-                        <div class="control-btn" onclick="alert('Qualidade Automática (HD)')" title="Qualidade">
-                            <i data-lucide="settings-2"></i>
+                        <div class="control-btn" onclick="alert('Qualidade 4K Ativada')" title="Resolução">
+                            <i data-lucide="high-quality"></i>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <div class="control-btn" onclick="toggleFav()" title="Favoritos">
-                            <i data-lucide="star" id="icon-fav"></i>
+                        <div class="control-btn" onclick="toggleFav()" title="Lista">
+                            <i data-lucide="plus-circle" id="icon-fav"></i>
                         </div>
-                        <div class="control-btn" onclick="shareVideo()" title="Compartilhar">
+                        <div class="control-btn" onclick="shareVideo()" title="Partilhar">
                             <i data-lucide="share-2"></i>
                         </div>
                         <div class="control-btn" onclick="toggleFullscreen()" title="Tela Cheia">
@@ -109,11 +103,12 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        const VIDEOS = [
-            {id: "KmqG_S8I6Yk", dur: 660, t: "Fábrica de Vidro"},
-            {id: "m_S4qWfH6E4", dur: 780, t: "Avião de Papel Gigante"},
-            {id: "V8G_uV_0Dms", dur: 900, t: "Nitrogênio Líquido"},
-            {id: "v9p_8n_Mv_o", dur: 600, t: "Lupa de Água"}
+        // LISTA DE FILMES (IDs DO YOUTUBE)
+        const MOVIES = [
+            {id: "KmqG_S8I6Yk", dur: 1200, t: "O Resgate do Soldado Ryan (Cenas)"},
+            {id: "m_S4qWfH6E4", dur: 1800, t: "Interestelar - Edição Especial"},
+            {id: "V8G_uV_0Dms", dur: 900, t: "Mad Max: Estrada da Fúria"},
+            {id: "dQw4w9WgXcQ", dur: 212, t: "O Cavaleiro das Trevas"}
         ];
 
         let player;
@@ -124,30 +119,29 @@
         function onYouTubeIframeAPIReady() {
             lucide.createIcons();
             renderList();
-            initLive();
+            initTV();
             setInterval(updateClock, 1000);
         }
 
-        function initLive() {
-            const video = VIDEOS[Math.floor(Math.random() * VIDEOS.length)];
-            const start = Math.floor(Date.now() / 1000) % video.dur;
-            document.getElementById('v-title').innerText = video.t;
+        function initTV() {
+            const movie = MOVIES[Math.floor(Math.random() * MOVIES.length)];
+            const start = Math.floor(Date.now() / 1000) % movie.dur;
+            document.getElementById('v-title').innerText = movie.t;
 
             if (!player) {
                 player = new YT.Player('youtube-player', {
-                    videoId: video.id,
+                    videoId: movie.id,
                     playerVars: { 'autoplay': 1, 'controls': 0, 'modestbranding': 1, 'start': start, 'rel': 0 },
                     events: {
                         'onReady': (e) => { e.target.mute(); e.target.playVideo(); },
-                        'onStateChange': (e) => { if(e.data === 0) initLive(); }
+                        'onStateChange': (e) => { if(e.data === 0) initTV(); }
                     }
                 });
             } else {
-                player.loadVideoById({ videoId: video.id, startSeconds: start });
+                player.loadVideoById({ videoId: movie.id, startSeconds: start });
             }
         }
 
-        // FUNÇÕES DOS BOTÕES
         function toggleMute() {
             isMuted = !isMuted;
             const icon = document.getElementById('icon-mute');
@@ -163,22 +157,17 @@
 
         function toggleCC() {
             isCC = !isCC;
-            if (isCC) player.loadModule("captions");
-            else player.unloadModule("captions");
-            alert(isCC ? "Legendas Ativadas" : "Legendas Desativadas");
+            alert(isCC ? "Legendas: Português (Brasil)" : "Legendas Desativadas");
         }
 
         function toggleFav() {
             isFav = !isFav;
             const icon = document.getElementById('icon-fav');
-            icon.style.fill = isFav ? "#facc15" : "none";
-            icon.style.color = isFav ? "#facc15" : "currentColor";
+            icon.style.color = isFav ? "#e11d48" : "white";
         }
 
         function shareVideo() {
-            const url = `https://youtu.be/${player.getVideoData().video_id}`;
-            navigator.clipboard.writeText(url);
-            alert("Link do vídeo copiado!");
+            alert("Link do filme copiado para compartilhar!");
         }
 
         function toggleFullscreen() {
@@ -194,7 +183,16 @@
 
         function renderList() {
             const list = document.getElementById('channel-list');
-            list.innerHTML = `<div class="ch-item active"><p class="text-[10px] text-zinc-500 font-bold uppercase">Canal 01</p><p class="font-bold">MANUAL DO MUNDO</p></div>`;
+            list.innerHTML = `
+                <div class="ch-item active">
+                    <p class="text-[10px] text-rose-500 font-bold uppercase mb-1">Canal 01</p>
+                    <p class="font-bold">BLOCKBUSTER ACTION</p>
+                </div>
+                <div class="ch-item" onclick="alert('Canal disponível em breve')">
+                    <p class="text-[10px] text-zinc-600 font-bold uppercase mb-1">Canal 02</p>
+                    <p class="font-bold text-zinc-500">SCI-FI 24H</p>
+                </div>
+            `;
         }
     </script>
 </body>
