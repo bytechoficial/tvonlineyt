@@ -3,53 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual TV - 24h</title>
+    <title>Manual TV - Live Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #000; color: #fff; margin: 0; overflow: hidden; font-family: sans-serif; }
+        body { background: #000; color: #fff; margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+        
+        /* Layout Principal */
         .app-container { display: flex; flex-direction: column; height: 100vh; }
         @media (min-width: 768px) { .app-container { flex-direction: row; } }
 
-        /* PLAYER COM ZOOM PARA ESCONDER YOUTUBE */
-        .video-section { flex: 1; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .video-viewport { position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; pointer-events: none; }
-        #youtube-player { width: 100%; height: 100%; }
-        .glass-shield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; background: transparent; }
-
-        /* SIDEBAR */
-        .sidebar { background: #0a0a0a; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; }
-        @media (min-width: 768px) { .sidebar { width: 320px; height: 100vh; } }
-        @media (max-width: 767px) { .sidebar { width: 100%; order: 2; height: 40vh; } }
-
-        .brand { padding: 20px; background: #000; border-bottom: 2px solid #00adef; }
-        .channel-card { padding: 15px 20px; border-bottom: 1px solid #111; cursor: pointer; transition: 0.2s; }
-        .channel-card.active { background: #111; border-left: 4px solid #00adef; }
+        /* AREA DO VÍDEO COM MÁSCARA PROFISSIONAL */
+        .video-viewport { flex: 1; position: relative; background: #000; overflow: hidden; }
         
-        .live-bar { height: 3px; background: #ff0000; width: 100%; }
+        /* Esconde os controles e logos do YT jogando-os para fora da tela */
+        #youtube-player {
+            position: absolute;
+            top: -10%; left: -10%; width: 120%; height: 120%;
+            pointer-events: none; /* Bloqueia qualquer clique no YT */
+        }
+
+        /* Camada de Interação do SEU Site */
+        .custom-player-ui {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 40%);
+        }
+
+        /* Barra de Progresso Estilo Live */
+        .live-progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.2); position: relative; }
+        .live-progress-bar { height: 100%; background: #ff0000; width: 100%; } /* Sempre Full para parecer Live */
+
+        /* BARRA LATERAL (SIDEBAR) */
+        .sidebar { background: #0f0f0f; border-right: 1px solid #222; overflow-y: auto; }
+        @media (min-width: 768px) { .sidebar { width: 350px; height: 100vh; } }
+        @media (max-width: 767px) { .sidebar { width: 100%; height: 40vh; order: 2; } }
+
+        .ch-item { padding: 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.3s; }
+        .ch-item:hover { background: #1a1a1a; }
+        .ch-item.active { background: #1e1e1e; border-left: 4px solid #00adef; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
+        
         <aside class="sidebar">
-            <div class="brand flex justify-between items-center">
-                <h1 class="text-xl font-black italic text-[#00adef]">MANUAL <span class="text-white">TV</span></h1>
-                <button onclick="toggleAudio()" id="btn-audio" class="bg-blue-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase">Som</button>
+            <div class="p-6 border-b border-zinc-800 flex justify-between items-center">
+                <h1 class="font-black italic text-xl text-[#00adef]">MANUAL <span class="text-white">TV</span></h1>
+                <button onclick="toggleAudio()" id="btn-audio" class="bg-white text-black text-[10px] font-bold px-4 py-1 rounded-sm uppercase">Ativar Som</button>
             </div>
-            <div id="channel-list" class="overflow-y-auto flex-1"></div>
+            <div id="channel-list"></div>
         </aside>
 
-        <main class="video-section">
-            <div class="video-viewport">
-                <div id="youtube-player"></div>
-            </div>
-            <div class="glass-shield"></div>
-            
-            <div class="absolute bottom-0 left-0 w-full">
-                <div class="live-bar"></div>
-                <div class="p-6 bg-black/80 backdrop-blur-md border-t border-zinc-800">
-                    <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-1">● No Ar Agora</p>
-                    <h2 id="video-title" class="text-2xl font-black uppercase italic tracking-tighter italic">Sincronizando...</h2>
+        <main class="video-viewport">
+            <div id="youtube-player"></div>
+
+            <div class="custom-player-ui p-8">
+                
+                <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase rounded-sm animate-pulse">Ao Vivo</span>
+                        <span id="video-timer" class="text-zinc-400 text-xs font-medium">00:00 • 24:00</span>
+                    </div>
+                    <h2 id="video-title" class="text-3xl md:text-5xl font-black uppercase tracking-tighter">Sincronizando...</h2>
+                    <p id="video-desc" class="text-zinc-400 mt-2 max-w-xl text-sm md:text-base">Carregando programação oficial diretamente do laboratório...</p>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="live-progress-container">
+                        <div class="live-progress-bar"></div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -61,75 +88,80 @@
             {
                 name: "Manual do Mundo",
                 videos: [
-                    {id: "KmqG_S8I6Yk", dur: 660, t: "Como é feito o vidro"},
-                    {id: "m_S4qWfH6E4", dur: 780, t: "O maior avião de papel"},
-                    {id: "V8G_uV_0Dms", dur: 900, t: "Experiência com Nitrogênio"},
-                    {id: "v9p_8n_Mv_o", dur: 600, t: "Lupa Gigante de Água"}
+                    {id: "KmqG_S8I6Yk", dur: 660, t: "Fábrica de Vidro", d: "Iberê mostra como a areia se transforma em vidro transparente em uma fábrica real."},
+                    {id: "m_S4qWfH6E4", dur: 780, t: "Avião de Papel Recordista", d: "Construindo o maior e mais eficiente avião de papel que você já viu."},
+                    {id: "V8G_uV_0Dms", dur: 900, t: "Gelo Seco vs Nitrogênio", d: "Uma batalha científica épica entre duas das substâncias mais geladas da terra."},
+                    {id: "v9p_8n_Mv_o", dur: 600, t: "Lupa de Água Gigante", d: "Transformando sacos de lixo e água em uma lente de aumento capaz de queimar coisas."}
                 ]
             },
             {
-                name: "Cine Action",
-                videos: [
-                    {id: "dQw4w9WgXcQ", dur: 212, t: "Trailer Ação 01"}
-                ]
+                name: "Ciência Todo Dia",
+                videos: [{id: "dQw4w9WgXcQ", dur: 212, t: "O Tempo é Real?", d: "Uma análise profunda sobre a física do tempo e como percebemos o universo."}]
             }
         ];
 
         let player;
-        let activeIdx = 0;
+        let activeCh = 0;
 
         function onYouTubeIframeAPIReady() {
-            renderList();
-            startTV();
+            renderChannels();
+            loadLive();
         }
 
-        function startTV() {
-            const cat = CHANNELS[activeIdx];
+        function loadLive() {
+            const cat = CHANNELS[activeCh];
+            // Sorteio aleatório para a "TV" não ser repetitiva
             const video = cat.videos[Math.floor(Math.random() * cat.videos.length)];
-            const startSecs = Math.floor(Date.now() / 1000) % video.dur;
+            const now = Math.floor(Date.now() / 1000);
+            const startAt = now % video.dur;
 
+            // Atualiza Interface Oficial
             document.getElementById('video-title').innerText = video.t;
+            document.getElementById('video-desc').innerText = video.d;
+            
+            // Simulação de horário (Pluto TV Style)
+            const date = new Date();
+            document.getElementById('video-timer').innerText = `${date.getHours()}:${date.getMinutes()} • Ao Vivo`;
 
             if (!player) {
                 player = new YT.Player('youtube-player', {
                     videoId: video.id,
                     playerVars: { 
                         'autoplay': 1, 'controls': 0, 'modestbranding': 1, 
-                        'rel': 0, 'start': startSecs, 'origin': window.location.origin 
+                        'rel': 0, 'start': startAt, 'iv_load_policy': 3 
                     },
                     events: {
                         'onReady': (e) => { e.target.mute(); e.target.playVideo(); },
-                        'onStateChange': (e) => { if(e.data === 0) startTV(); },
-                        'onError': (e) => { console.log("Vídeo com erro, pulando..."); startTV(); }
+                        'onStateChange': (e) => { if(e.data === 0) loadLive(); }
                     }
                 });
             } else {
-                player.loadVideoById({ videoId: video.id, startSeconds: startSecs });
+                player.loadVideoById({ videoId: video.id, startSeconds: startAt });
             }
         }
 
         function toggleAudio() {
             if(player.isMuted()) {
                 player.unMute();
-                document.getElementById('btn-audio').innerText = "Mudo";
+                document.getElementById('btn-audio').innerText = "Mutar Áudio";
             } else {
                 player.mute();
-                document.getElementById('btn-audio').innerText = "Som";
+                document.getElementById('btn-audio').innerText = "Ativar Som";
             }
         }
 
-        function changeCh(i) {
-            activeIdx = i;
-            startTV();
-            renderList();
+        function changeChannel(i) {
+            activeCh = i;
+            loadLive();
+            renderChannels();
         }
 
-        function renderList() {
+        function renderChannels() {
             const list = document.getElementById('channel-list');
             list.innerHTML = CHANNELS.map((c, i) => `
-                <div onclick="changeCh(${i})" class="channel-card ${activeIdx === i ? 'active' : ''}">
-                    <p class="text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest italic">Channel 0${i+1}</p>
-                    <p class="font-black text-sm uppercase tracking-tight">${c.name}</p>
+                <div onclick="changeChannel(${i})" class="ch-item ${activeCh === i ? 'active' : ''}">
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase mb-1">Canal 0${i+1}</p>
+                    <p class="font-bold uppercase tracking-tight">${c.name}</p>
                 </div>
             `).join('');
         }
