@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cine Pro - Filmes 24h</title>
+    <title>Cine Pro - Stream Direto</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -11,38 +11,38 @@
         .app-container { display: flex; flex-direction: column; height: 100vh; }
         @media (min-width: 768px) { .app-container { flex-direction: row; } }
 
-        .video-viewport { flex: 1; position: relative; background: #000; overflow: hidden; }
-        #youtube-player {
-            position: absolute;
-            top: -10%; left: -10%; width: 120%; height: 120%;
-            pointer-events: none;
-        }
+        .video-viewport { flex: 1; position: relative; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #main-video { width: 100%; height: 100%; object-fit: contain; }
 
-        .custom-player-ui {
+        .custom-ui {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 100;
+            z-index: 50;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 50%);
+            background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0) 70%);
+            padding: 2rem;
+            pointer-events: none;
         }
 
-        .live-progress-container { width: 100%; height: 4px; background: rgba(255,255,255,0.2); margin-bottom: 12px; }
-        .live-progress-bar { height: 100%; background: #ff0000; width: 100%; }
+        .ui-elements { pointer-events: auto; }
+
+        .progress-container { width: 100%; height: 4px; background: rgba(255,255,255,0.2); margin-bottom: 15px; border-radius: 2px; overflow: hidden; }
+        .progress-bar { height: 100%; background: #e11d48; width: 0%; transition: width 0.1s linear; }
 
         .control-btn { 
             display: flex; align-items: center; justify-content: center;
-            padding: 8px; border-radius: 4px; transition: 0.2s; cursor: pointer;
+            padding: 10px; border-radius: 6px; transition: 0.2s; cursor: pointer;
         }
-        .control-btn:hover { background: rgba(255,255,255,0.1); }
-        .control-btn i { width: 20px; height: 20px; }
+        .control-btn:hover { background: rgba(255,255,255,0.15); }
+        .control-btn i { width: 22px; height: 22px; stroke-width: 2.5px; }
 
         .sidebar { background: #0a0a0a; border-right: 1px solid #1a1a1a; overflow-y: auto; }
         @media (min-width: 768px) { .sidebar { width: 320px; height: 100vh; } }
         @media (max-width: 767px) { .sidebar { width: 100%; height: 35vh; order: 2; } }
 
-        .ch-item { padding: 15px 20px; border-bottom: 1px solid #111; cursor: pointer; }
+        .ch-item { padding: 20px; border-bottom: 1px solid #111; cursor: pointer; }
         .ch-item.active { background: #111; border-left: 4px solid #e11d48; }
     </style>
 </head>
@@ -51,49 +51,53 @@
     <div class="app-container">
         <aside class="sidebar">
             <div class="p-6 border-b border-zinc-800">
-                <h1 class="font-black italic text-xl text-rose-600 tracking-tighter">CINE <span class="text-white">PRO</span></h1>
+                <h1 class="font-black italic text-xl text-rose-600 tracking-tighter uppercase">Cine <span class="text-white">Live</span></h1>
             </div>
             <div id="channel-list"></div>
         </aside>
 
-        <main class="video-viewport" id="main-player">
-            <div id="youtube-player"></div>
+        <main class="video-viewport" id="player-container">
+            <video id="main-video" playsinline autoplay muted loop>
+                <source src="https://cdn.pixabay.com/video/2026/01/28/330898_large.mp4" type="video/mp4">
+            </video>
 
-            <div class="custom-player-ui p-6" id="player-overlay">
-                <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="bg-rose-600 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-sm">Filme ao Vivo</span>
-                        <span id="current-time" class="text-zinc-400 text-[11px] font-mono">00:00:00</span>
-                    </div>
-                    <h2 id="v-title" class="text-2xl md:text-5xl font-black uppercase italic tracking-tighter">Carregando Filme...</h2>
-                </div>
-
-                <div class="live-progress-container">
-                    <div class="live-progress-bar"></div>
-                </div>
-
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <div class="control-btn" onclick="toggleMute()" title="Áudio">
-                            <i data-lucide="volume-x" id="icon-mute"></i>
+            <div class="custom-ui">
+                <div class="ui-elements">
+                    <div class="mb-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-rose-600 px-2 py-0.5 text-[10px] font-bold uppercase rounded-sm">Transmissão Direta</span>
+                            <span id="video-time-display" class="text-zinc-400 text-xs font-medium">00:00 / 00:00</span>
                         </div>
-                        <div class="control-btn" onclick="toggleCC()" title="Legendas">
-                            <i data-lucide="captions"></i>
-                        </div>
-                        <div class="control-btn" onclick="alert('Qualidade 4K Ativada')" title="Resolução">
-                            <i data-lucide="high-quality"></i>
-                        </div>
+                        <h2 id="v-title" class="text-3xl md:text-5xl font-black uppercase italic tracking-tighter">Natureza Cinematográfica</h2>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <div class="control-btn" onclick="toggleFav()" title="Lista">
-                            <i data-lucide="plus-circle" id="icon-fav"></i>
+                    <div class="progress-container">
+                        <div id="pb-fill" class="progress-bar"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="control-btn" onclick="toggleMute()">
+                                <i data-lucide="volume-x" id="vol-icon"></i>
+                            </div>
+                            <div class="control-btn" onclick="alert('Legendas: Indisponíveis para este arquivo')">
+                                <i data-lucide="captions"></i>
+                            </div>
+                            <div class="control-btn" onclick="alert('Qualidade: Original (Pixabay CDN)')">
+                                <i data-lucide="layers"></i>
+                            </div>
                         </div>
-                        <div class="control-btn" onclick="shareVideo()" title="Partilhar">
-                            <i data-lucide="share-2"></i>
-                        </div>
-                        <div class="control-btn" onclick="toggleFullscreen()" title="Tela Cheia">
-                            <i data-lucide="maximize"></i>
+
+                        <div class="flex items-center gap-4">
+                            <div class="control-btn" onclick="toggleFav()">
+                                <i data-lucide="plus-circle" id="fav-icon"></i>
+                            </div>
+                            <div class="control-btn" onclick="copyLink()">
+                                <i data-lucide="share-2"></i>
+                            </div>
+                            <div class="control-btn" onclick="toggleFS()">
+                                <i data-lucide="maximize"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -101,96 +105,59 @@
         </main>
     </div>
 
-    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        // LISTA DE FILMES (IDs DO YOUTUBE)
-        const MOVIES = [
-            {id: "KmqG_S8I6Yk", dur: 1200, t: "O Resgate do Soldado Ryan (Cenas)"},
-            {id: "m_S4qWfH6E4", dur: 1800, t: "Interestelar - Edição Especial"},
-            {id: "V8G_uV_0Dms", dur: 900, t: "Mad Max: Estrada da Fúria"},
-            {id: "dQw4w9WgXcQ", dur: 212, t: "O Cavaleiro das Trevas"}
-        ];
+        const video = document.getElementById('main-video');
+        const pbFill = document.getElementById('pb-fill');
 
-        let player;
-        let isMuted = true;
-        let isCC = false;
-        let isFav = false;
-
-        function onYouTubeIframeAPIReady() {
+        window.onload = () => {
             lucide.createIcons();
             renderList();
-            initTV();
-            setInterval(updateClock, 1000);
-        }
 
-        function initTV() {
-            const movie = MOVIES[Math.floor(Math.random() * MOVIES.length)];
-            const start = Math.floor(Date.now() / 1000) % movie.dur;
-            document.getElementById('v-title').innerText = movie.t;
+            video.ontimeupdate = () => {
+                const pct = (video.currentTime / video.duration) * 100;
+                pbFill.style.width = pct + "%";
+                
+                const cur = formatTime(video.currentTime);
+                const dur = formatTime(video.duration || 0);
+                document.getElementById('video-time-display').innerText = `${cur} / ${dur}`;
+            };
+        };
 
-            if (!player) {
-                player = new YT.Player('youtube-player', {
-                    videoId: movie.id,
-                    playerVars: { 'autoplay': 1, 'controls': 0, 'modestbranding': 1, 'start': start, 'rel': 0 },
-                    events: {
-                        'onReady': (e) => { e.target.mute(); e.target.playVideo(); },
-                        'onStateChange': (e) => { if(e.data === 0) initTV(); }
-                    }
-                });
-            } else {
-                player.loadVideoById({ videoId: movie.id, startSeconds: start });
-            }
+        function formatTime(secs) {
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
         function toggleMute() {
-            isMuted = !isMuted;
-            const icon = document.getElementById('icon-mute');
-            if (isMuted) {
-                player.mute();
-                icon.setAttribute('data-lucide', 'volume-x');
-            } else {
-                player.unMute();
-                icon.setAttribute('data-lucide', 'volume-2');
-            }
+            video.muted = !video.muted;
+            const icon = document.getElementById('vol-icon');
+            icon.setAttribute('data-lucide', video.muted ? 'volume-x' : 'volume-2');
             lucide.createIcons();
         }
 
-        function toggleCC() {
-            isCC = !isCC;
-            alert(isCC ? "Legendas: Português (Brasil)" : "Legendas Desativadas");
-        }
-
         function toggleFav() {
-            isFav = !isFav;
-            const icon = document.getElementById('icon-fav');
-            icon.style.color = isFav ? "#e11d48" : "white";
+            const icon = document.getElementById('fav-icon');
+            icon.style.color = icon.style.color === 'rgb(225, 29, 72)' ? 'white' : '#e11d48';
         }
 
-        function shareVideo() {
-            alert("Link do filme copiado para compartilhar!");
+        function copyLink() {
+            navigator.clipboard.writeText(video.querySelector('source').src);
+            alert("Link do vídeo copiado!");
         }
 
-        function toggleFullscreen() {
-            const el = document.getElementById('main-player');
-            if (!document.fullscreenElement) el.requestFullscreen();
+        function toggleFS() {
+            const container = document.getElementById('player-container');
+            if (!document.fullscreenElement) container.requestFullscreen();
             else document.exitFullscreen();
-        }
-
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('current-time').innerText = now.toLocaleTimeString();
         }
 
         function renderList() {
             const list = document.getElementById('channel-list');
             list.innerHTML = `
                 <div class="ch-item active">
-                    <p class="text-[10px] text-rose-500 font-bold uppercase mb-1">Canal 01</p>
-                    <p class="font-bold">BLOCKBUSTER ACTION</p>
-                </div>
-                <div class="ch-item" onclick="alert('Canal disponível em breve')">
-                    <p class="text-[10px] text-zinc-600 font-bold uppercase mb-1">Canal 02</p>
-                    <p class="font-bold text-zinc-500">SCI-FI 24H</p>
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase mb-1">Destaque</p>
+                    <p class="font-bold uppercase tracking-tight">Natureza Cinematográfica</p>
                 </div>
             `;
         }
