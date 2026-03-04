@@ -5,24 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manual TV - Live Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { background: #000; color: #fff; margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
-        
-        /* Layout Principal */
         .app-container { display: flex; flex-direction: column; height: 100vh; }
         @media (min-width: 768px) { .app-container { flex-direction: row; } }
 
-        /* AREA DO VÍDEO COM MÁSCARA PROFISSIONAL */
+        /* AREA DO VÍDEO */
         .video-viewport { flex: 1; position: relative; background: #000; overflow: hidden; }
         
-        /* Esconde os controles e logos do YT jogando-os para fora da tela */
         #youtube-player {
             position: absolute;
             top: -10%; left: -10%; width: 120%; height: 120%;
-            pointer-events: none; /* Bloqueia qualquer clique no YT */
+            pointer-events: none;
         }
 
-        /* Camada de Interação do SEU Site */
         .custom-player-ui {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -30,21 +27,28 @@
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 40%);
+            background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 50%);
+            transition: opacity 0.3s;
         }
 
-        /* Barra de Progresso Estilo Live */
-        .live-progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.2); position: relative; }
-        .live-progress-bar { height: 100%; background: #ff0000; width: 100%; } /* Sempre Full para parecer Live */
+        /* CONTROLES */
+        .live-progress-container { width: 100%; height: 4px; background: rgba(255,255,255,0.2); margin-bottom: 12px; }
+        .live-progress-bar { height: 100%; background: #ff0000; width: 100%; }
 
-        /* BARRA LATERAL (SIDEBAR) */
-        .sidebar { background: #0f0f0f; border-right: 1px solid #222; overflow-y: auto; }
-        @media (min-width: 768px) { .sidebar { width: 350px; height: 100vh; } }
-        @media (max-width: 767px) { .sidebar { width: 100%; height: 40vh; order: 2; } }
+        .control-btn { 
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px; border-radius: 4px; transition: 0.2s; cursor: pointer;
+        }
+        .control-btn:hover { background: rgba(255,255,255,0.1); }
+        .control-btn i { width: 20px; height: 20px; }
 
-        .ch-item { padding: 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.3s; }
-        .ch-item:hover { background: #1a1a1a; }
-        .ch-item.active { background: #1e1e1e; border-left: 4px solid #00adef; }
+        /* SIDEBAR */
+        .sidebar { background: #0a0a0a; border-right: 1px solid #1a1a1a; overflow-y: auto; }
+        @media (min-width: 768px) { .sidebar { width: 320px; height: 100vh; } }
+        @media (max-width: 767px) { .sidebar { width: 100%; height: 35vh; order: 2; } }
+
+        .ch-item { padding: 15px 20px; border-bottom: 1px solid #111; cursor: pointer; }
+        .ch-item.active { background: #111; border-left: 4px solid #00adef; }
     </style>
 </head>
 <body>
@@ -52,30 +56,51 @@
     <div class="app-container">
         
         <aside class="sidebar">
-            <div class="p-6 border-b border-zinc-800 flex justify-between items-center">
+            <div class="p-6 border-b border-zinc-800">
                 <h1 class="font-black italic text-xl text-[#00adef]">MANUAL <span class="text-white">TV</span></h1>
-                <button onclick="toggleAudio()" id="btn-audio" class="bg-white text-black text-[10px] font-bold px-4 py-1 rounded-sm uppercase">Ativar Som</button>
             </div>
             <div id="channel-list"></div>
         </aside>
 
-        <main class="video-viewport">
+        <main class="video-viewport" id="main-player">
             <div id="youtube-player"></div>
 
-            <div class="custom-player-ui p-8">
-                
-                <div class="mb-6">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase rounded-sm animate-pulse">Ao Vivo</span>
-                        <span id="video-timer" class="text-zinc-400 text-xs font-medium">00:00 • 24:00</span>
+            <div class="custom-player-ui p-6" id="player-overlay">
+                <div class="mb-4">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="bg-red-600 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-sm">Ao Vivo</span>
+                        <span id="current-time" class="text-zinc-400 text-[11px] font-mono">14:00:00</span>
                     </div>
-                    <h2 id="video-title" class="text-3xl md:text-5xl font-black uppercase tracking-tighter">Sincronizando...</h2>
-                    <p id="video-desc" class="text-zinc-400 mt-2 max-w-xl text-sm md:text-base">Carregando programação oficial diretamente do laboratório...</p>
+                    <h2 id="v-title" class="text-2xl md:text-4xl font-black uppercase italic tracking-tighter">Sincronizando...</h2>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <div class="live-progress-container">
-                        <div class="live-progress-bar"></div>
+                <div class="live-progress-container">
+                    <div class="live-progress-bar"></div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="control-btn" onclick="toggleMute()" title="Mutar/Desmutar">
+                            <i data-lucide="volume-2" id="icon-mute"></i>
+                        </div>
+                        <div class="control-btn" onclick="toggleCC()" title="Legendas">
+                            <i data-lucide="captions"></i>
+                        </div>
+                        <div class="control-btn" onclick="alert('Qualidade Automática (HD)')" title="Qualidade">
+                            <i data-lucide="settings-2"></i>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <div class="control-btn" onclick="toggleFav()" title="Favoritos">
+                            <i data-lucide="star" id="icon-fav"></i>
+                        </div>
+                        <div class="control-btn" onclick="shareVideo()" title="Compartilhar">
+                            <i data-lucide="share-2"></i>
+                        </div>
+                        <div class="control-btn" onclick="toggleFullscreen()" title="Tela Cheia">
+                            <i data-lucide="maximize"></i>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -84,86 +109,92 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        const CHANNELS = [
-            {
-                name: "Manual do Mundo",
-                videos: [
-                    {id: "KmqG_S8I6Yk", dur: 660, t: "Fábrica de Vidro", d: "Iberê mostra como a areia se transforma em vidro transparente em uma fábrica real."},
-                    {id: "m_S4qWfH6E4", dur: 780, t: "Avião de Papel Recordista", d: "Construindo o maior e mais eficiente avião de papel que você já viu."},
-                    {id: "V8G_uV_0Dms", dur: 900, t: "Gelo Seco vs Nitrogênio", d: "Uma batalha científica épica entre duas das substâncias mais geladas da terra."},
-                    {id: "v9p_8n_Mv_o", dur: 600, t: "Lupa de Água Gigante", d: "Transformando sacos de lixo e água em uma lente de aumento capaz de queimar coisas."}
-                ]
-            },
-            {
-                name: "Ciência Todo Dia",
-                videos: [{id: "dQw4w9WgXcQ", dur: 212, t: "O Tempo é Real?", d: "Uma análise profunda sobre a física do tempo e como percebemos o universo."}]
-            }
+        const VIDEOS = [
+            {id: "KmqG_S8I6Yk", dur: 660, t: "Fábrica de Vidro"},
+            {id: "m_S4qWfH6E4", dur: 780, t: "Avião de Papel Gigante"},
+            {id: "V8G_uV_0Dms", dur: 900, t: "Nitrogênio Líquido"},
+            {id: "v9p_8n_Mv_o", dur: 600, t: "Lupa de Água"}
         ];
 
         let player;
-        let activeCh = 0;
+        let isMuted = true;
+        let isCC = false;
+        let isFav = false;
 
         function onYouTubeIframeAPIReady() {
-            renderChannels();
-            loadLive();
+            lucide.createIcons();
+            renderList();
+            initLive();
+            setInterval(updateClock, 1000);
         }
 
-        function loadLive() {
-            const cat = CHANNELS[activeCh];
-            // Sorteio aleatório para a "TV" não ser repetitiva
-            const video = cat.videos[Math.floor(Math.random() * cat.videos.length)];
-            const now = Math.floor(Date.now() / 1000);
-            const startAt = now % video.dur;
-
-            // Atualiza Interface Oficial
-            document.getElementById('video-title').innerText = video.t;
-            document.getElementById('video-desc').innerText = video.d;
-            
-            // Simulação de horário (Pluto TV Style)
-            const date = new Date();
-            document.getElementById('video-timer').innerText = `${date.getHours()}:${date.getMinutes()} • Ao Vivo`;
+        function initLive() {
+            const video = VIDEOS[Math.floor(Math.random() * VIDEOS.length)];
+            const start = Math.floor(Date.now() / 1000) % video.dur;
+            document.getElementById('v-title').innerText = video.t;
 
             if (!player) {
                 player = new YT.Player('youtube-player', {
                     videoId: video.id,
-                    playerVars: { 
-                        'autoplay': 1, 'controls': 0, 'modestbranding': 1, 
-                        'rel': 0, 'start': startAt, 'iv_load_policy': 3 
-                    },
+                    playerVars: { 'autoplay': 1, 'controls': 0, 'modestbranding': 1, 'start': start, 'rel': 0 },
                     events: {
                         'onReady': (e) => { e.target.mute(); e.target.playVideo(); },
-                        'onStateChange': (e) => { if(e.data === 0) loadLive(); }
+                        'onStateChange': (e) => { if(e.data === 0) initLive(); }
                     }
                 });
             } else {
-                player.loadVideoById({ videoId: video.id, startSeconds: startAt });
+                player.loadVideoById({ videoId: video.id, startSeconds: start });
             }
         }
 
-        function toggleAudio() {
-            if(player.isMuted()) {
-                player.unMute();
-                document.getElementById('btn-audio').innerText = "Mutar Áudio";
-            } else {
+        // FUNÇÕES DOS BOTÕES
+        function toggleMute() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('icon-mute');
+            if (isMuted) {
                 player.mute();
-                document.getElementById('btn-audio').innerText = "Ativar Som";
+                icon.setAttribute('data-lucide', 'volume-x');
+            } else {
+                player.unMute();
+                icon.setAttribute('data-lucide', 'volume-2');
             }
+            lucide.createIcons();
         }
 
-        function changeChannel(i) {
-            activeCh = i;
-            loadLive();
-            renderChannels();
+        function toggleCC() {
+            isCC = !isCC;
+            if (isCC) player.loadModule("captions");
+            else player.unloadModule("captions");
+            alert(isCC ? "Legendas Ativadas" : "Legendas Desativadas");
         }
 
-        function renderChannels() {
+        function toggleFav() {
+            isFav = !isFav;
+            const icon = document.getElementById('icon-fav');
+            icon.style.fill = isFav ? "#facc15" : "none";
+            icon.style.color = isFav ? "#facc15" : "currentColor";
+        }
+
+        function shareVideo() {
+            const url = `https://youtu.be/${player.getVideoData().video_id}`;
+            navigator.clipboard.writeText(url);
+            alert("Link do vídeo copiado!");
+        }
+
+        function toggleFullscreen() {
+            const el = document.getElementById('main-player');
+            if (!document.fullscreenElement) el.requestFullscreen();
+            else document.exitFullscreen();
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('current-time').innerText = now.toLocaleTimeString();
+        }
+
+        function renderList() {
             const list = document.getElementById('channel-list');
-            list.innerHTML = CHANNELS.map((c, i) => `
-                <div onclick="changeChannel(${i})" class="ch-item ${activeCh === i ? 'active' : ''}">
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase mb-1">Canal 0${i+1}</p>
-                    <p class="font-bold uppercase tracking-tight">${c.name}</p>
-                </div>
-            `).join('');
+            list.innerHTML = `<div class="ch-item active"><p class="text-[10px] text-zinc-500 font-bold uppercase">Canal 01</p><p class="font-bold">MANUAL DO MUNDO</p></div>`;
         }
     </script>
 </body>
